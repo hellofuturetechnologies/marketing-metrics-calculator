@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Calculate click-through rate, acquisition costs, conversion rate, and return on ad spend.">
+<title>Marketing Metrics Calculator | Hello Future Technologies</title>
+<style>
+:root{color-scheme:light;--navy:#10233f;--ink:#14263b;--muted:#526479;--line:#dce4ee;--blue:#144dcc}
+*{box-sizing:border-box}body{margin:0;background:#f2f6fb;color:var(--ink);font:16px/1.5 "Instrument Sans",system-ui,sans-serif}header{background:var(--navy);color:#fff;padding:24px max(22px,calc((100vw - 1060px)/2)) 74px}header a{color:#dce9ff;text-decoration:none;font-weight:650}h1{font-size:clamp(2.25rem,6vw,3.85rem);letter-spacing:-.06em;line-height:1.06;margin:28px 0 12px}header p{color:#d2def0;margin:0;max-width:650px}main{max-width:1104px;margin:-34px auto 0;padding:0 22px 38px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);gap:16px;align-items:start}section{background:white;border:1px solid var(--line);border-radius:16px;padding:22px;min-width:0;box-shadow:0 12px 36px #1832520a}h2{font-size:1.2rem;margin:0 0 14px}.hint,footer,#status{color:var(--muted);font-size:.88rem}.hint{margin:0 0 12px}.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{margin-bottom:13px}label{display:block;font-weight:650;margin-bottom:5px}input,select,button{font:inherit;border:1px solid #aebdce;border-radius:8px;background:#fff;color:var(--ink);padding:8px 10px}input,select{width:100%;min-width:0}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button{font-weight:650;cursor:pointer;background:#f4f8ff;color:#173e91}button.primary{color:white;background:var(--blue);border-color:var(--blue)}:focus-visible{outline:3px solid #5386f0;outline-offset:2px}#status{min-height:1.4em;margin:10px 0 0}dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}dl div{min-width:0;border:1px solid var(--line);background:#f7faff;border-radius:10px;padding:10px 12px}dt{font-weight:650;font-size:.88rem}dd{margin:4px 0 0;font-weight:750;font-size:1.22rem;overflow-wrap:anywhere}small{display:block;color:var(--muted);margin-top:3px}footer{text-align:center;padding:0 22px 25px}@media(max-width:740px){main{grid-template-columns:1fr;padding-inline:14px}section{padding:17px}}@media(max-width:360px){.pair,dl{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><a href="https://hellofuturetechnology.com/">Hello Future Technologies</a><h1>Marketing Metrics Calculator</h1><p>Turn campaign totals into performance metrics. Enter the numbers you have and calculate the metrics they support.</p></header>
+<main>
+<section aria-labelledby="inputs"><h2 id="inputs">Campaign totals</h2><p class="hint">Use the same campaign and reporting period for every input. Leave unavailable totals blank.</p>
+<form id="campaign">
+<div class="pair">
+<div class="field"><label for="impressions">Impressions</label><input id="impressions" type="number" min="0" max="999999999999" step="1" inputmode="numeric"></div>
+<div class="field"><label for="clicks">Clicks</label><input id="clicks" type="number" min="0" max="999999999999" step="1" inputmode="numeric"></div>
+<div class="field"><label for="leads">Leads</label><input id="leads" type="number" min="0" max="999999999999" step="1" inputmode="numeric"></div>
+<div class="field"><label for="conversions">Conversions</label><input id="conversions" type="number" min="0" max="999999999999" step="1" inputmode="numeric"></div>
+<div class="field"><label for="spend">Ad spend</label><input id="spend" type="number" min="0" max="999999999999" step="any" inputmode="decimal"></div>
+<div class="field"><label for="revenue">Attributed revenue</label><input id="revenue" type="number" min="0" max="999999999999" step="any" inputmode="decimal"></div>
+</div>
+<div class="field"><label for="currency">Currency for spend and revenue</label><select id="currency"><option>PKR</option><option>USD</option><option>EUR</option><option>GBP</option><option>AED</option><option>CAD</option><option>AUD</option><option value="">Other or unspecified</option></select></div>
+<div class="actions"><button class="primary" type="submit">Calculate metrics</button><button type="button" id="example">Load example</button><button type="reset">Clear</button></div>
+</form></section>
+<section aria-labelledby="results"><h2 id="results">Campaign metrics</h2><p class="hint">A dash means a needed total is missing or the denominator is zero.</p><dl id="metrics"></dl><p id="status" role="status" aria-live="polite"></p></section>
+</main>
+<footer>Calculations run in your browser. Campaign totals are never uploaded by this tool.</footer>
+<script>
+'use strict';
+const metrics = [
+  ['CTR', 'Clicks ÷ impressions × 100', 'percent', 'clicks', 'impressions', 100],
+  ['CPC', 'Spend ÷ clicks', 'money', 'spend', 'clicks', 1],
+  ['CPM', 'Spend ÷ impressions × 1,000', 'money', 'spend', 'impressions', 1000],
+  ['CPL', 'Spend ÷ leads', 'money', 'spend', 'leads', 1],
+  ['CPA', 'Spend ÷ conversions', 'money', 'spend', 'conversions', 1],
+  ['Conversion rate', 'Conversions ÷ clicks × 100', 'percent', 'conversions', 'clicks', 100],
+  ['ROAS', 'Attributed revenue ÷ spend', 'ratio', 'revenue', 'spend', 1]
+];
+function compute(values) {
+  return metrics.map(([, , , numerator, denominator, scale]) => {
+    const n = values[numerator], d = values[denominator];
+    if (!Number.isFinite(n) || n < 0 || !Number.isFinite(d) || d <= 0) return null;
+    const value = (n / d) * scale;
+    return Number.isFinite(value) ? value : null;
+  });
+}
+const get = id => document.getElementById(id);
+const fields = ['impressions','clicks','leads','conversions','spend','revenue'];
+const form = get('campaign');
+const number = new Intl.NumberFormat(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+function render(results, currency) {
+  get('metrics').replaceChildren();
+  for (const [i, [title, formula, type]] of metrics.entries()) {
+    const card = document.createElement('div');
+    const label = document.createElement('dt');
+    const value = document.createElement('dd');
+    const detail = document.createElement('small');
+    label.textContent = title;
+    detail.textContent = formula;
+    const amount = results[i];
+    if (amount == null) value.textContent = '—';
+    else {
+      const prefix = type === 'money' && currency ? currency + ' ' : '';
+      const suffix = type === 'percent' ? '%' : type === 'ratio' ? '×' : '';
+      value.textContent = prefix + number.format(amount) + suffix;
+    }
+    value.append(detail);
+    card.append(label, value);
+    get('metrics').append(card);
+  }
+}
+form.addEventListener('submit', event => {
+  event.preventDefault();
+  const results = compute(Object.fromEntries(fields.map(key => [key, get(key).valueAsNumber])));
+  render(results, get('currency').value);
+  const count = results.filter(value => value !== null).length;
+  get('status').textContent = count ? 'Calculated ' + count + ' of ' + metrics.length + ' metrics.' : 'Enter the totals needed for at least one metric.';
+});
+function clearResults() { render([], ''); get('status').textContent = ''; }
+form.addEventListener('reset', clearResults);
+form.addEventListener('input', clearResults);
+get('example').addEventListener('click', () => {
+  const sample = [50000, 1250, 100, 50, 25000, 100000];
+  fields.forEach((key, i) => { get(key).value = sample[i]; });
+  get('currency').value = 'PKR';
+  form.requestSubmit();
+});
+clearResults();
+</script>
+</body>
+</html>
